@@ -29,4 +29,4 @@ See https://github.com/denisenkom/go-mssqldb#deprecated for more information.
 ### Official Support by migrate
 
 Versions of MS SQL Server 2019 newer than CTP3.1 are not officially supported since there are issues testing against the Docker image.
-For more info, see: https://github.com/golang-migrate/migrate/issues/160#issuecomment-522433269
+For more info, see: https://github.com/nikoskarakostas/migrate/issues/160#issuecomment-522433269

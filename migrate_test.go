@@ -9,10 +9,10 @@ import (
 	"strings"
 	"testing"
 
-	dStub "github.com/golang-migrate/migrate/v4/database/stub"
-	"github.com/golang-migrate/migrate/v4/source"
+	dStub "github.com/nikoskarakostas/migrate/v4/database/stub"
+	"github.com/nikoskarakostas/migrate/v4/source"
 
-	sStub "github.com/golang-migrate/migrate/v4/source/stub"
+	sStub "github.com/nikoskarakostas/migrate/v4/source/stub"
 )
 
 // sourceStubMigrations hold the following migrations:
@@ -115,7 +115,7 @@ func ExampleNewWithDatabaseInstance() {
 
 	// Create driver instance from db.
 	// Check each driver if it supports the WithInstance function.
-	// `import "github.com/golang-migrate/migrate/v4/database/postgres"`
+	// `import "github.com/nikoskarakostas/migrate/v4/database/postgres"`
 	instance, err := dStub.WithInstance(db, &dStub.Config{})
 	if err != nil {
 		log.Fatal(err)
@@ -165,7 +165,7 @@ func ExampleNewWithSourceInstance() {
 
 	// Create driver instance from DummyInstance di.
 	// Check each driver if it support the WithInstance function.
-	// `import "github.com/golang-migrate/migrate/v4/source/stub"`
+	// `import "github.com/nikoskarakostas/migrate/v4/source/stub"`
 	instance, err := sStub.WithInstance(di, &sStub.Config{})
 	if err != nil {
 		log.Fatal(err)

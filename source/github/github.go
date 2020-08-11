@@ -12,7 +12,7 @@ import (
 )
 
 import (
-	"github.com/golang-migrate/migrate/v4/source"
+	"github.com/nikoskarakostas/migrate/v4/source"
 	"github.com/google/go-github/github"
 )
 

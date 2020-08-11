@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"reflect"
 
-	"github.com/golang-migrate/migrate/v4/database"
+	"github.com/nikoskarakostas/migrate/v4/database"
 )
 
 func init() {
