@@ -7,6 +7,7 @@ package migrate
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"sync"
 	"time"
@@ -734,6 +735,7 @@ func (m *Migrate) runMigrations(ret <-chan interface{}) error {
 			return r
 
 		case *Migration:
+
 			migr := r
 
 			// set version with dirty state
@@ -742,9 +744,17 @@ func (m *Migrate) runMigrations(ret <-chan interface{}) error {
 			}
 
 			if migr.Body != nil {
-				m.logVerbosePrintf("Read and execute %v\n", migr.LogString())
-				if err := m.databaseDrv.Run(migr.BufferedBody); err != nil {
-					return err
+				switch migr.MigrationType {
+				case "sql":
+					m.logVerbosePrintf("Read and execute %v\n", migr.LogString())
+					if err := m.databaseDrv.Run(migr.BufferedBody); err != nil {
+						return err
+					}
+				case "so":
+					m.logVerbosePrintf("Read and execute Bin %v\n", migr.LogString())
+					if err := m.databaseDrv.(database.DriverWithBinaryExecSupport).RunBinary(migr.BufferedBody); err != nil {
+						return err
+					}
 				}
 			}
 
@@ -833,11 +843,22 @@ func (m *Migrate) stop() bool {
 func (m *Migrate) newMigration(version uint, targetVersion int) (*Migration, error) {
 	var migr *Migration
 
+	_, careExtension := Find([]string{"s3", "file"}, m.sourceName)
+	var r io.ReadCloser
+	var identifier string
+	var migrType source.MigrationType
+	var err error
 	if targetVersion >= int(version) {
-		r, identifier, err := m.sourceDrv.ReadUp(version)
+
+		if careExtension {
+			r, identifier, migrType, err = m.sourceDrv.(source.DriverWithExtension).ReadWithExtensionUp(version)
+		} else {
+			r, identifier, err = m.sourceDrv.ReadUp(version)
+		}
+
 		if os.IsNotExist(err) {
 			// create "empty" migration
-			migr, err = NewMigration(nil, "", version, targetVersion)
+			migr, err = NewMigration(nil, "", version, migrType, targetVersion)
 			if err != nil {
 				return nil, err
 			}
@@ -847,17 +868,22 @@ func (m *Migrate) newMigration(version uint, targetVersion int) (*Migration, err
 
 		} else {
 			// create migration from up source
-			migr, err = NewMigration(r, identifier, version, targetVersion)
+			migr, err = NewMigration(r, identifier, version, migrType, targetVersion)
 			if err != nil {
 				return nil, err
 			}
 		}
 
 	} else {
-		r, identifier, err := m.sourceDrv.ReadDown(version)
+		if careExtension {
+			r, identifier, migrType, err = m.sourceDrv.(source.DriverWithExtension).ReadWithExtensionDown(version)
+		} else {
+			r, identifier, err = m.sourceDrv.ReadDown(version)
+		}
+
 		if os.IsNotExist(err) {
 			// create "empty" migration
-			migr, err = NewMigration(nil, "", version, targetVersion)
+			migr, err = NewMigration(nil, "", version, migrType, targetVersion)
 			if err != nil {
 				return nil, err
 			}
@@ -867,7 +893,7 @@ func (m *Migrate) newMigration(version uint, targetVersion int) (*Migration, err
 
 		} else {
 			// create migration from down source
-			migr, err = NewMigration(r, identifier, version, targetVersion)
+			migr, err = NewMigration(r, identifier, version, migrType, targetVersion)
 			if err != nil {
 				return nil, err
 			}
@@ -977,4 +1003,13 @@ func (m *Migrate) logErr(err error) {
 	if m.Log != nil {
 		m.Log.Printf("error: %v", err)
 	}
+}
+
+func Find(slice []string, val string) (int, bool) {
+	for i, item := range slice {
+		if item == val {
+			return i, true
+		}
+	}
+	return -1, false
 }

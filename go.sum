@@ -129,6 +129,9 @@ github.com/gocql/gocql v0.0.0-20190301043612-f6df8288f9b4/go.mod h1:4Fw1eo5iaEhD
 github.com/gogo/protobuf v1.2.0/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/gogo/protobuf v1.3.1 h1:DqDEcV5aeaTmdFBePNpYsp3FlcVH/2ISVVM9Qf8PSls=
 github.com/gogo/protobuf v1.3.1/go.mod h1:SlYgWuQ5SjCEi6WLHjHCa1yvBfUnHcTbrrZtXPKa29o=
+github.com/golang-migrate/migrate v1.3.2 h1:QAlFV1QF9zdkzy/jujlBVkVu+L/+k18cg8tuY1/4JDY=
+github.com/golang-migrate/migrate v3.5.4+incompatible h1:R7OzwvCJTCgwapPCiX6DyBiu2czIUMDCB118gFTKTUA=
+github.com/golang-migrate/migrate v3.5.4+incompatible/go.mod h1:IsVUlFN5puWOmXrqjgGUfIRIbU7mr8oNBE2tyERd9Wk=
 github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe h1:lXe2qZdvpiX5WZkZR4hgp4KJVfY3nMkvmwbVkpv1rVY=
 github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe/go.mod h1:8vg3r2VgvsThLBIFL93Qb5yWzgyZWhEmBwUJWevAkK0=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b h1:VKtxabqXZkF25pY9ekfRL6a582T4P37/31XEstQ5p58=
@@ -290,6 +293,9 @@ github.com/nakagami/firebirdsql v0.0.0-20190310045651-3c02a58cfed8 h1:P48LjvUQpT
 github.com/nakagami/firebirdsql v0.0.0-20190310045651-3c02a58cfed8/go.mod h1:86wM1zFnC6/uDBfZGNwB65O+pR2OFi5q/YQaEUid1qA=
 github.com/neo4j/neo4j-go-driver v1.8.1-0.20200803113522-b626aa943eba h1:fhFP5RliM2HW/8XdcO5QngSfFli9GcRIpMXvypTQt6E=
 github.com/neo4j/neo4j-go-driver v1.8.1-0.20200803113522-b626aa943eba/go.mod h1:ncO5VaFWh0Nrt+4KT4mOZboaczBZcLuHrG+/sUeP8gI=
+github.com/nikoskarakostas/migrate v1.3.2 h1:b77EiKyGJRE8cxjLVVlRTZ5s2eYTMp9PgxHtrlynCT8=
+github.com/nikoskarakostas/migrate v3.5.4+incompatible h1:31om8VmL0ZaqwS5O7dA5qkSboQv6Erm4VJ5ec8GLsJs=
+github.com/nikoskarakostas/migrate v3.5.4+incompatible/go.mod h1:Xrz7bIXhqjqGap8v2EyN+z1qRGx41h+U4j524Xyfly8=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
 github.com/onsi/ginkgo v1.12.0 h1:Iw5WCbBcaAAd0fpRb1c9r5YCylv4XDoCSigm1zLevwU=
 github.com/onsi/ginkgo v1.12.0/go.mod h1:oUhWkIvk5aDxtKvDDuw8gItl8pKl42LzjC9KZE0HfGg=

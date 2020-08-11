@@ -37,3 +37,21 @@ func Parse(raw string) (*Migration, error) {
 	}
 	return nil, ErrParse
 }
+
+func ParseWithExtension(raw string) (*Migration, error) {
+	m := Regex.FindStringSubmatch(raw)
+	if len(m) == 5 {
+		versionUint64, err := strconv.ParseUint(m[1], 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		return &Migration{
+			Version:    uint(versionUint64),
+			Identifier: m[2],
+			Direction:  Direction(m[3]),
+			Type:       MigrationType(m[4]),
+			Raw:        raw,
+		}, nil
+	}
+	return nil, ErrParse
+}

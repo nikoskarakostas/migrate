@@ -16,10 +16,10 @@ import (
 )
 
 func init() {
-	source.Register("s3", &s3Driver{})
+	source.Register("s3", &S3Driver{})
 }
 
-type s3Driver struct {
+type S3Driver struct {
 	s3client   s3iface.S3API
 	config     *Config
 	migrations *source.Migrations
@@ -30,7 +30,7 @@ type Config struct {
 	Prefix string
 }
 
-func (s *s3Driver) Open(folder string) (source.Driver, error) {
+func (s *S3Driver) Open(folder string) (source.Driver, error) {
 	config, err := parseURI(folder)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func (s *s3Driver) Open(folder string) (source.Driver, error) {
 }
 
 func WithInstance(s3client s3iface.S3API, config *Config) (source.Driver, error) {
-	driver := &s3Driver{
+	driver := &S3Driver{
 		config:     config,
 		s3client:   s3client,
 		migrations: source.NewMigrations(),
@@ -75,7 +75,7 @@ func parseURI(uri string) (*Config, error) {
 	}, nil
 }
 
-func (s *s3Driver) loadMigrations() error {
+func (s *S3Driver) loadMigrations() error {
 	output, err := s.s3client.ListObjects(&s3.ListObjectsInput{
 		Bucket:    aws.String(s.config.Bucket),
 		Prefix:    aws.String(s.config.Prefix),
@@ -86,10 +86,11 @@ func (s *s3Driver) loadMigrations() error {
 	}
 	for _, object := range output.Contents {
 		_, fileName := path.Split(aws.StringValue(object.Key))
-		m, err := source.DefaultParse(fileName)
+		m, err := source.ParseWithExtension(fileName)
 		if err != nil {
 			continue
 		}
+
 		if !s.migrations.Append(m) {
 			return fmt.Errorf("unable to parse file %v", aws.StringValue(object.Key))
 		}
@@ -97,11 +98,11 @@ func (s *s3Driver) loadMigrations() error {
 	return nil
 }
 
-func (s *s3Driver) Close() error {
+func (s *S3Driver) Close() error {
 	return nil
 }
 
-func (s *s3Driver) First() (uint, error) {
+func (s *S3Driver) First() (uint, error) {
 	v, ok := s.migrations.First()
 	if !ok {
 		return 0, os.ErrNotExist
@@ -109,7 +110,7 @@ func (s *s3Driver) First() (uint, error) {
 	return v, nil
 }
 
-func (s *s3Driver) Prev(version uint) (uint, error) {
+func (s *S3Driver) Prev(version uint) (uint, error) {
 	v, ok := s.migrations.Prev(version)
 	if !ok {
 		return 0, os.ErrNotExist
@@ -117,7 +118,7 @@ func (s *s3Driver) Prev(version uint) (uint, error) {
 	return v, nil
 }
 
-func (s *s3Driver) Next(version uint) (uint, error) {
+func (s *S3Driver) Next(version uint) (uint, error) {
 	v, ok := s.migrations.Next(version)
 	if !ok {
 		return 0, os.ErrNotExist
@@ -125,21 +126,35 @@ func (s *s3Driver) Next(version uint) (uint, error) {
 	return v, nil
 }
 
-func (s *s3Driver) ReadUp(version uint) (io.ReadCloser, string, error) {
+func (s *S3Driver) ReadUp(version uint) (io.ReadCloser, string, error) {
 	if m, ok := s.migrations.Up(version); ok {
 		return s.open(m)
 	}
 	return nil, "", os.ErrNotExist
 }
 
-func (s *s3Driver) ReadDown(version uint) (io.ReadCloser, string, error) {
+func (s *S3Driver) ReadDown(version uint) (io.ReadCloser, string, error) {
 	if m, ok := s.migrations.Down(version); ok {
 		return s.open(m)
 	}
 	return nil, "", os.ErrNotExist
 }
 
-func (s *s3Driver) open(m *source.Migration) (io.ReadCloser, string, error) {
+func (s *S3Driver) ReadWithExtensionUp(version uint) (io.ReadCloser, string, source.MigrationType, error) {
+	if m, ok := s.migrations.Up(version); ok {
+		return s.openWithExtension(m)
+	}
+	return nil, "", "", os.ErrNotExist
+}
+
+func (s *S3Driver) ReadWithExtensionDown(version uint) (io.ReadCloser, string, source.MigrationType, error) {
+	if m, ok := s.migrations.Down(version); ok {
+		return s.openWithExtension(m)
+	}
+	return nil, "", "", os.ErrNotExist
+}
+
+func (s *S3Driver) open(m *source.Migration) (io.ReadCloser, string, error) {
 	key := path.Join(s.config.Prefix, m.Raw)
 	object, err := s.s3client.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(s.config.Bucket),
@@ -149,4 +164,16 @@ func (s *s3Driver) open(m *source.Migration) (io.ReadCloser, string, error) {
 		return nil, "", err
 	}
 	return object.Body, m.Identifier, nil
+}
+
+func (s *S3Driver) openWithExtension(m *source.Migration) (io.ReadCloser, string, source.MigrationType, error) {
+	key := path.Join(s.config.Prefix, m.Raw)
+	object, err := s.s3client.GetObject(&s3.GetObjectInput{
+		Bucket: aws.String(s.config.Bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return nil, "", "", err
+	}
+	return object.Body, m.Identifier, m.Type, nil
 }

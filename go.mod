@@ -22,6 +22,7 @@ require (
 	github.com/gobuffalo/here v0.6.0
 	github.com/gocql/gocql v0.0.0-20190301043612-f6df8288f9b4
 	github.com/gogo/protobuf v1.3.1 // indirect
+	github.com/golang-migrate/migrate v3.5.4+incompatible // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/go-cmp v0.5.1 // indirect
 	github.com/google/go-github v17.0.0+incompatible
@@ -34,6 +35,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/nakagami/firebirdsql v0.0.0-20190310045651-3c02a58cfed8
 	github.com/neo4j/neo4j-go-driver v1.8.1-0.20200803113522-b626aa943eba
+	github.com/nikoskarakostas/migrate v3.5.4+incompatible // indirect
 	github.com/snowflakedb/gosnowflake v1.3.5
 	github.com/stretchr/testify v1.5.1
 	github.com/tidwall/pretty v0.0.0-20180105212114-65a9db5fad51 // indirect

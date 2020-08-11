@@ -81,6 +81,17 @@ type Driver interface {
 	Drop() error
 }
 
+type BinaryExecSupport interface {
+	// Run applies a migration by executing a binary file
+	// this file is an .so file blah blah blah
+	RunBinary(migration io.Reader) error
+}
+
+type DriverWithBinaryExecSupport interface {
+	Driver
+	BinaryExecSupport
+}
+
 // Open returns a new driver instance.
 func Open(url string) (Driver, error) {
 	scheme, err := iurl.SchemeFromURL(url)

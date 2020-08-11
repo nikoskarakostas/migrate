@@ -7,6 +7,9 @@ import (
 // Direction is either up or down.
 type Direction string
 
+// MigrationType is one of the following: sql, so
+type MigrationType string
+
 const (
 	Down Direction = "down"
 	Up   Direction = "up"
@@ -29,6 +32,9 @@ type Migration struct {
 	// Raw holds the raw location path to this migration in source.
 	// ReadUp and ReadDown will use this.
 	Raw string
+
+	// Type holds the extension of the migraiton file read.
+	Type MigrationType
 }
 
 // Migrations wraps Migration and has an internal index

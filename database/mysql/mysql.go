@@ -11,17 +11,15 @@ import (
 	"io"
 	"io/ioutil"
 	nurl "net/url"
+	"os"
+	"path/filepath"
+	"plugin"
 	"strconv"
 	"strings"
-)
 
-import (
 	"github.com/go-sql-driver/mysql"
-	"github.com/hashicorp/go-multierror"
-)
-
-import (
 	"github.com/golang-migrate/migrate/v4/database"
+	"github.com/hashicorp/go-multierror"
 )
 
 func init() {
@@ -285,6 +283,58 @@ func (m *Mysql) Run(migration io.Reader) error {
 	}
 
 	return nil
+}
+
+// RunBinary is a func that invokes a custom func of a migration .so file.
+// It passes the address of the open connection and db in order for the bin to work with it.
+func (m *Mysql) RunBinary(migration io.Reader) error {
+	migr, err := ioutil.ReadAll(migration)
+	if err != nil {
+		return err
+	}
+
+	dname, err := ioutil.TempDir("", "tempDirectory")
+	defer os.RemoveAll(dname)
+	fname := filepath.Join(dname, "thisisafile")
+
+	err = ioutil.WriteFile(fname, migr, 0666)
+
+	p, err := plugin.Open(fname)
+
+	if err != nil {
+		return err
+	}
+
+	varConn, err := p.Lookup("CONN") // On the migration bin there should be a global var CONN of type *sql.Conn
+
+	if err != nil {
+		return err
+	}
+	varDB, err := p.Lookup("DB") // On the migration bin there should be a global var CONN of type *sql.DB
+	if err != nil {
+		return err
+	}
+	varERR, err := p.Lookup("ERR") // On the migration bin there should be a global var ERR of type *error
+	if err != nil {
+		return err
+	}
+
+	var migrationFuncError error // Here we will catch possible errors
+	*varConn.(**sql.Conn) = m.conn
+	*varDB.(**sql.DB) = m.db
+	*varERR.(**error) = &migrationFuncError
+
+	funcExec, err := p.Lookup("Migration") // // On the migration bin there should be an exported Func called Migration (no args)
+	if err != nil {
+		return err
+	}
+
+	if funcExec.(func())(); migrationFuncError != nil { //doTheJob
+		return migrationFuncError
+	}
+
+	return nil
+
 }
 
 func (m *Mysql) SetVersion(version int, dirty bool) error {
