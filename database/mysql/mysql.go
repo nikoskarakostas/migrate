@@ -18,8 +18,8 @@ import (
 	"strings"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/nikoskarakostas/migrate/v4/database"
 	"github.com/hashicorp/go-multierror"
+	"github.com/nikoskarakostas/migrate/v4/database"
 )
 
 func init() {
@@ -314,12 +314,18 @@ func (m *Mysql) RunBinary(migration io.Reader) error {
 	if err != nil {
 		return err
 	}
+	varTargetSchema, err := p.Lookup("TargetSchema") // On the migration bin there should be a global var TargetTable of type *string
+	if err != nil {
+		return err
+	}
 	varERR, err := p.Lookup("ERR") // On the migration bin there should be a global var ERR of type *error
 	if err != nil {
 		return err
 	}
 
-	var migrationFuncError error // Here we will catch possible errors
+	var targetSchema string = m.config.DatabaseName // Here we will point the varTargetSchema to
+	var migrationFuncError error                    // Here we will catch possible errors
+	*varTargetSchema.(**string) = &targetSchema
 	*varConn.(**sql.Conn) = m.conn
 	*varDB.(**sql.DB) = m.db
 	*varERR.(**error) = &migrationFuncError
@@ -328,6 +334,13 @@ func (m *Mysql) RunBinary(migration io.Reader) error {
 	if err != nil {
 		return err
 	}
+
+	defer func() error {
+		if r := recover(); r != nil {
+			return r.(error)
+		}
+		return nil
+	}()
 
 	if funcExec.(func())(); migrationFuncError != nil { //doTheJob
 		return migrationFuncError

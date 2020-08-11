@@ -82,8 +82,7 @@ type Driver interface {
 }
 
 type BinaryExecSupport interface {
-	// Run applies a migration by executing a binary file
-	// this file is an .so file blah blah blah
+	// RunBinary applies a migration by executing a binary file
 	RunBinary(migration io.Reader) error
 }
 
