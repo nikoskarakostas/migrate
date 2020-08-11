@@ -2,7 +2,7 @@
 ## Original Repo
 https://github.com/golang-migrate/migrate/
 ## About this fork
-I wanted to be able to run either sql migrations or execute a golang binary file doing changes to the database.
+I wanted to run either sql migrations or execute a golang binary file as a migration step applying changes to the database. This addition utilizes the plugin package in order to do so. Changes are currently at the [support_binary_migrations](https://github.com/nikoskarakostas/migrate/tree/support_binary_migrations) branch.
 ## Example usage
 Below is an example of a .go file of a migration.
 #### example file: [id]_add_ten_example_tables.up.go
