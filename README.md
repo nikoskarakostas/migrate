@@ -18,7 +18,7 @@ var (
 	CONN         *sql.Conn  // mandatory
 	DB           *sql.DB    // mandatory
 	TargetSchema *string    // mandatory
-	ERR          *error     // mandatory
+	Err          *error     // mandatory
 )
 
 func Migration() { // must be Migration [this gets called]
@@ -35,7 +35,7 @@ func Migration() { // must be Migration [this gets called]
 			);
 		`, *TargetSchema, i))   // You must use the TargetSchema in order to target it. Otherwise, the default schema is targeted.
 		if err != nil {
-			*ERR = err          // This is how we catch errors
+			*Err = err          // This is how we catch errors
 			return              // This is how we catch errors
 		}
 	}
@@ -55,7 +55,7 @@ go build -buildmode=plugin -o /your/migrations/directory[id]_add_ten_example_tab
 
 - File extension of the built file must be .so
 - Changes must be contained in the Migration function. This is the one that will be executed. Follow the structure of the example above.
-- CONN, DB, ERR declarations are mandatory. These are accessed by the package and get to point to package's memory addresses.
+- CONN, DB, Err, TargetSchema declarations are mandatory. These are accessed by the package and get to point to package's memory addresses.
 
 ## Basic Functionality 
 In a nutshell, we read the bytes of the binary file, fetch them, create a temporary file, write the feched data to it and call the [plugin](https://golang.org/pkg/plugin/) package in order to execute the binary's Migration func.

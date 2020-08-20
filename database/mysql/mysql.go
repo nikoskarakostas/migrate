@@ -300,25 +300,11 @@ func (m *Mysql) RunBinary(migration io.Reader) error {
 	err = ioutil.WriteFile(fname, migr, 0666)
 
 	p, err := plugin.Open(fname)
-
 	if err != nil {
 		return err
 	}
 
-	varConn, err := p.Lookup("CONN") // On the migration bin there should be a global var CONN of type *sql.Conn
-
-	if err != nil {
-		return err
-	}
-	varDB, err := p.Lookup("DB") // On the migration bin there should be a global var CONN of type *sql.DB
-	if err != nil {
-		return err
-	}
-	varTargetSchema, err := p.Lookup("TargetSchema") // On the migration bin there should be a global var TargetTable of type *string
-	if err != nil {
-		return err
-	}
-	varERR, err := p.Lookup("ERR") // On the migration bin there should be a global var ERR of type *error
+	varTargetSchema, varConn, varDB, varErr, err := mapPluginVariables(p)
 	if err != nil {
 		return err
 	}
@@ -328,7 +314,7 @@ func (m *Mysql) RunBinary(migration io.Reader) error {
 	*varTargetSchema.(**string) = &targetSchema
 	*varConn.(**sql.Conn) = m.conn
 	*varDB.(**sql.DB) = m.db
-	*varERR.(**error) = &migrationFuncError
+	*varErr.(**error) = &migrationFuncError
 
 	funcExec, err := p.Lookup("Migration") // // On the migration bin there should be an exported Func called Migration (no args)
 	if err != nil {
@@ -342,12 +328,33 @@ func (m *Mysql) RunBinary(migration io.Reader) error {
 		return nil
 	}()
 
-	if funcExec.(func())(); migrationFuncError != nil { //doTheJob
+	funcExec.(func())() //doTheJob
+	if migrationFuncError != nil {
 		return migrationFuncError
 	}
 
 	return nil
+}
 
+func mapPluginVariables(p *plugin.Plugin) (varConn, varDB, varTargetSchema, varErr plugin.Symbol, err error) {
+
+	varConn, err = p.Lookup("CONN") // On the migration bin there should be a global var CONN of type *sql.Conn
+	if err != nil {
+		return
+	}
+	varDB, err = p.Lookup("DB") // On the migration bin there should be a global var CONN of type *sql.DB
+	if err != nil {
+		return
+	}
+	varTargetSchema, err = p.Lookup("TargetSchema") // On the migration bin there should be a global var TargetTable of type *string
+	if err != nil {
+		return
+	}
+	varErr, err = p.Lookup("Err") // On the migration bin there should be a global var Err of type *error
+	if err != nil {
+		return
+	}
+	return
 }
 
 func (m *Mysql) SetVersion(version int, dirty bool) error {
