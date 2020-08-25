@@ -9,7 +9,7 @@ import (
 	"io"
 	"sync"
 
-	iurl "github.com/golang-migrate/migrate/v4/internal/url"
+	iurl "github.com/nikoskarakostas/migrate/v4/internal/url"
 )
 
 var (
@@ -79,6 +79,16 @@ type Driver interface {
 	// Note that this is a breaking action, a new call to Open() is necessary to
 	// ensure subsequent calls work as expected.
 	Drop() error
+}
+
+type BinaryExecSupport interface {
+	// RunBinary applies a migration by executing a binary file
+	RunBinary(migration io.Reader) error
+}
+
+type DriverWithBinaryExecSupport interface {
+	Driver
+	BinaryExecSupport
 }
 
 // Open returns a new driver instance.

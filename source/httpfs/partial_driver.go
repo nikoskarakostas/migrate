@@ -7,7 +7,7 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/golang-migrate/migrate/v4/source"
+	"github.com/nikoskarakostas/migrate/v4/source"
 )
 
 // PartialDriver is a helper service for creating new source drivers working with
@@ -45,7 +45,7 @@ func (p *PartialDriver) Init(fs http.FileSystem, path string) error {
 			continue
 		}
 
-		m, err := source.DefaultParse(file.Name())
+		m, err := source.ParseWithExtension(file.Name())
 		if err != nil {
 			continue // ignore files that we can't parse
 		}
@@ -131,6 +131,38 @@ func (p *PartialDriver) ReadDown(version uint) (r io.ReadCloser, identifier stri
 		return body, m.Identifier, nil
 	}
 	return nil, "", &os.PathError{
+		Op:   "read down for version " + strconv.FormatUint(uint64(version), 10),
+		Path: p.path,
+		Err:  os.ErrNotExist,
+	}
+}
+
+// ReadUp is part of source.Driver interface implementation.
+func (p *PartialDriver) ReadWithExtensionUp(version uint) (r io.ReadCloser, identifier string, migrType source.MigrationType, err error) {
+	if m, ok := p.migrations.Up(version); ok {
+		body, err := p.fs.Open(path.Join(p.path, m.Raw))
+		if err != nil {
+			return nil, "", "", err
+		}
+		return body, m.Identifier, m.Type, nil
+	}
+	return nil, "", "", &os.PathError{
+		Op:   "read up for version " + strconv.FormatUint(uint64(version), 10),
+		Path: p.path,
+		Err:  os.ErrNotExist,
+	}
+}
+
+// ReadDown is part of source.Driver interface implementation.
+func (p *PartialDriver) ReadWithExtensionDown(version uint) (r io.ReadCloser, identifier string, migrType source.MigrationType, err error) {
+	if m, ok := p.migrations.Down(version); ok {
+		body, err := p.fs.Open(path.Join(p.path, m.Raw))
+		if err != nil {
+			return nil, "", "", err
+		}
+		return body, m.Identifier, m.Type, nil
+	}
+	return nil, "", "", &os.PathError{
 		Op:   "read down for version " + strconv.FormatUint(uint64(version), 10),
 		Path: p.path,
 		Err:  os.ErrNotExist,

@@ -11,17 +11,15 @@ import (
 	"io"
 	"io/ioutil"
 	nurl "net/url"
+	"os"
+	"path/filepath"
+	"plugin"
 	"strconv"
 	"strings"
-)
 
-import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/hashicorp/go-multierror"
-)
-
-import (
-	"github.com/golang-migrate/migrate/v4/database"
+	"github.com/nikoskarakostas/migrate/v4/database"
 )
 
 func init() {
@@ -287,6 +285,78 @@ func (m *Mysql) Run(migration io.Reader) error {
 	return nil
 }
 
+// RunBinary is a func that invokes a custom func of a migration .so file.
+// It passes the address of the open connection and db in order for the bin to work with it.
+func (m *Mysql) RunBinary(migration io.Reader) error {
+	migr, err := ioutil.ReadAll(migration)
+	if err != nil {
+		return err
+	}
+
+	dname, err := ioutil.TempDir("", "tempDirectory")
+	defer os.RemoveAll(dname)
+	fname := filepath.Join(dname, "thisisafile")
+
+	err = ioutil.WriteFile(fname, migr, 0666)
+
+	p, err := plugin.Open(fname)
+	if err != nil {
+		return err
+	}
+
+	varTargetSchema, varConn, varDB, varErr, err := mapPluginVariables(p)
+	if err != nil {
+		return err
+	}
+
+	var targetSchema string = m.config.DatabaseName // Here we will point the varTargetSchema to
+	var migrationFuncError error                    // Here we will catch possible errors
+	*varTargetSchema.(**string) = &targetSchema
+	*varConn.(**sql.Conn) = m.conn
+	*varDB.(**sql.DB) = m.db
+	*varErr.(**error) = &migrationFuncError
+
+	funcExec, err := p.Lookup("Migration") // // On the migration bin there should be an exported Func called Migration (no args)
+	if err != nil {
+		return err
+	}
+
+	defer func() error {
+		if r := recover(); r != nil {
+			return r.(error)
+		}
+		return nil
+	}()
+
+	funcExec.(func())() //doTheJob
+	if migrationFuncError != nil {
+		return migrationFuncError
+	}
+
+	return nil
+}
+
+func mapPluginVariables(p *plugin.Plugin) (varConn, varDB, varTargetSchema, varErr plugin.Symbol, err error) {
+
+	varConn, err = p.Lookup("CONN") // On the migration bin there should be a global var CONN of type *sql.Conn
+	if err != nil {
+		return
+	}
+	varDB, err = p.Lookup("DB") // On the migration bin there should be a global var CONN of type *sql.DB
+	if err != nil {
+		return
+	}
+	varTargetSchema, err = p.Lookup("TargetSchema") // On the migration bin there should be a global var TargetTable of type *string
+	if err != nil {
+		return
+	}
+	varErr, err = p.Lookup("Err") // On the migration bin there should be a global var Err of type *error
+	if err != nil {
+		return
+	}
+	return
+}
+
 func (m *Mysql) SetVersion(version int, dirty bool) error {
 	tx, err := m.conn.BeginTx(context.Background(), &sql.TxOptions{})
 	if err != nil {
@@ -303,7 +373,7 @@ func (m *Mysql) SetVersion(version int, dirty bool) error {
 
 	// Also re-write the schema version for nil dirty versions to prevent
 	// empty schema version for failed down migration on the first migration
-	// See: https://github.com/golang-migrate/migrate/issues/330
+	// See: https://github.com/nikoskarakostas/migrate/issues/330
 	if version >= 0 || (version == database.NilVersion && dirty) {
 		query := "INSERT INTO `" + m.config.MigrationsTable + "` (version, dirty) VALUES (?, ?)"
 		if _, err := tx.ExecContext(context.Background(), query, version, dirty); err != nil {

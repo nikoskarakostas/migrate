@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"time"
+
+	"github.com/nikoskarakostas/migrate/v4/source"
 )
 
 // DefaultBufferSize sets the in memory buffer size (in Bytes) for every
@@ -54,6 +56,10 @@ type Migration struct {
 
 	// BytesRead holds the number of Bytes read from the migration source.
 	BytesRead int64
+
+	// MigrationType holds the extension of the original migration file.
+	// It helps us to handle the .so case (binary) so we run the bin instead of applying the (sql) migraiton
+	MigrationType source.MigrationType
 }
 
 // NewMigration returns a new Migration and sets the body, identifier,
@@ -74,13 +80,15 @@ type Migration struct {
 // last down migration, there is no next down migration, the targetVersion should
 // be nil. Nil in this case is represented by -1 (because type int).
 func NewMigration(body io.ReadCloser, identifier string,
-	version uint, targetVersion int) (*Migration, error) {
+	version uint, migrType source.MigrationType, targetVersion int) (*Migration, error) {
 	tnow := time.Now()
+
 	m := &Migration{
 		Identifier:    identifier,
 		Version:       version,
 		TargetVersion: targetVersion,
 		Scheduled:     tnow,
+		MigrationType: migrType,
 	}
 
 	if body == nil {

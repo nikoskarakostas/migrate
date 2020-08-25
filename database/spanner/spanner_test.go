@@ -5,11 +5,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/golang-migrate/migrate/v4"
+	"github.com/nikoskarakostas/migrate/v4"
 
-	dt "github.com/golang-migrate/migrate/v4/database/testing"
+	dt "github.com/nikoskarakostas/migrate/v4/database/testing"
 
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/nikoskarakostas/migrate/v4/source/file"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

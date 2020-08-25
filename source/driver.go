@@ -72,6 +72,19 @@ type Driver interface {
 	ReadDown(version uint) (r io.ReadCloser, identifier string, err error)
 }
 
+type ReadWithExtensionSupport interface {
+	// ReadUp identical to drivers ReadUp, but returns a migrationType as well (extension of the migrate )
+	ReadWithExtensionUp(version uint) (r io.ReadCloser, identifier string, migType MigrationType, err error)
+
+	// ReadDown identical to drivers ReadDown, but returns a migrationType as well (extension of the migrate )
+	ReadWithExtensionDown(version uint) (r io.ReadCloser, identifier string, migType MigrationType, err error)
+}
+
+type DriverWithExtension interface {
+	Driver
+	ReadWithExtensionSupport
+}
+
 // Open returns a new driver instance.
 func Open(url string) (Driver, error) {
 	u, err := nurl.Parse(url)

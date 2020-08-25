@@ -5,8 +5,8 @@ import (
 	"net/http"
 	stdurl "net/url"
 
-	"github.com/golang-migrate/migrate/v4/source"
-	"github.com/golang-migrate/migrate/v4/source/httpfs"
+	"github.com/nikoskarakostas/migrate/v4/source"
+	"github.com/nikoskarakostas/migrate/v4/source/httpfs"
 	"github.com/markbates/pkger"
 	"github.com/markbates/pkger/pkging"
 )

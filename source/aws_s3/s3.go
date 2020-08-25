@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
-	"github.com/golang-migrate/migrate/v4/source"
+	"github.com/nikoskarakostas/migrate/v4/source"
 )
 
 func init() {
@@ -86,10 +86,11 @@ func (s *s3Driver) loadMigrations() error {
 	}
 	for _, object := range output.Contents {
 		_, fileName := path.Split(aws.StringValue(object.Key))
-		m, err := source.DefaultParse(fileName)
+		m, err := source.ParseWithExtension(fileName)
 		if err != nil {
 			continue
 		}
+
 		if !s.migrations.Append(m) {
 			return fmt.Errorf("unable to parse file %v", aws.StringValue(object.Key))
 		}
@@ -139,6 +140,20 @@ func (s *s3Driver) ReadDown(version uint) (io.ReadCloser, string, error) {
 	return nil, "", os.ErrNotExist
 }
 
+func (s *s3Driver) ReadWithExtensionUp(version uint) (io.ReadCloser, string, source.MigrationType, error) {
+	if m, ok := s.migrations.Up(version); ok {
+		return s.openWithExtension(m)
+	}
+	return nil, "", "", os.ErrNotExist
+}
+
+func (s *s3Driver) ReadWithExtensionDown(version uint) (io.ReadCloser, string, source.MigrationType, error) {
+	if m, ok := s.migrations.Down(version); ok {
+		return s.openWithExtension(m)
+	}
+	return nil, "", "", os.ErrNotExist
+}
+
 func (s *s3Driver) open(m *source.Migration) (io.ReadCloser, string, error) {
 	key := path.Join(s.config.Prefix, m.Raw)
 	object, err := s.s3client.GetObject(&s3.GetObjectInput{
@@ -149,4 +164,16 @@ func (s *s3Driver) open(m *source.Migration) (io.ReadCloser, string, error) {
 		return nil, "", err
 	}
 	return object.Body, m.Identifier, nil
+}
+
+func (s *s3Driver) openWithExtension(m *source.Migration) (io.ReadCloser, string, source.MigrationType, error) {
+	key := path.Join(s.config.Prefix, m.Raw)
+	object, err := s.s3client.GetObject(&s3.GetObjectInput{
+		Bucket: aws.String(s.config.Bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return nil, "", "", err
+	}
+	return object.Body, m.Identifier, m.Type, nil
 }
