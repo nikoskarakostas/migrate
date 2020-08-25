@@ -304,7 +304,7 @@ func (m *Mysql) RunBinary(migration io.Reader) error {
 		return err
 	}
 
-	varTargetSchema, varConn, varDB, varErr, err := mapPluginVariables(p)
+	varConn, varDB, varTargetSchema, varErr, err := mapPluginVariables(p)
 	if err != nil {
 		return err
 	}

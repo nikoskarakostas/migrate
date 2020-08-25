@@ -3,7 +3,7 @@ ARG VERSION
 
 RUN apk add --no-cache git gcc musl-dev make
 
-WORKDIR /go/src/github.com/golang-migrate/migrate
+WORKDIR /go/src/github.com/nikoskarakostas/migrate
 
 ENV GO111MODULE=on
 

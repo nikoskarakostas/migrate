@@ -22,7 +22,6 @@ require (
 	github.com/gobuffalo/here v0.6.0
 	github.com/gocql/gocql v0.0.0-20190301043612-f6df8288f9b4
 	github.com/gogo/protobuf v1.3.1 // indirect
-	//github.com/golang-migrate/migrate v3.5.4+incompatible // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/go-cmp v0.5.1 // indirect
 	github.com/google/go-github v17.0.0+incompatible
